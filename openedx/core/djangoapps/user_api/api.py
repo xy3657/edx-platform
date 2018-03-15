@@ -430,6 +430,7 @@ class RegistrationFormFactory(object):
         form_desc.add_field(
             "password",
             label=password_label,
+            instructions="Your password must contain a number and a letter.",
             field_type="password",
             restrictions=restrictions,
             required=required
