@@ -81,7 +81,7 @@ class @HTMLEditingDescriptor
         },
         image_advtab: true,
         # We may want to add "styleselect" when we collect all styles used throughout the LMS
-        toolbar: "formatselect | fontselect | bold italic underline forecolor wrapAsCode | bullist numlist outdent indent blockquote | link unlink image | code",
+        toolbar: "formatselect | fontselect | bold italic underline forecolor wrapAsCode | bullist numlist outdent indent blockquote | link unlink addImage | code",
         block_formats: interpolate("%(paragraph)s=p;%(preformatted)s=pre;%(heading3)s=h3;%(heading4)s=h4;%(heading5)s=h5;%(heading6)s=h6", {
             paragraph: gettext("Paragraph"),
             preformatted: gettext("Preformatted"),
@@ -936,6 +936,33 @@ class @HTMLEditingDescriptor
       onclick : () ->
         ed.formatter.toggle('code')
     })
+    # SFE INTEGRATION
+    ed.addButton('addImage', {
+      title : 'Add Image',
+      image : "#{baseUrl}/images/ico-tinymce-code.png",
+      onclick : () ->
+        ed.insertContent('Hello world!')
+        ed.windowManager.open({
+          title: 'Example plugin',
+          body: [
+            {type: 'textbox', name: 'title', label: 'Title'}
+          ],
+          onsubmit: (e) ->
+            ed.insertContent('Title: ' + e.data.title)
+        })
+    })
+    # ed.addButton("image", {
+    #     icon: "image",
+    #     tooltip: "Insert/edit image",
+    #     # onclick: n(i),
+    #     stateSelector: "img:not([data-mce-object],[data-mce-placeholder])"
+    # }), e.addMenuItem("image", {
+    #     icon: "image",
+    #     text: "Insert image",
+    #     # onclick: n(i),
+    #     context: "insert",
+    #     prependToContext: !0
+    # })
 
     @visualEditor = ed
 
