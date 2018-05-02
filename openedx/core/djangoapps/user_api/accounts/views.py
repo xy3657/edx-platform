@@ -10,6 +10,7 @@ from functools import wraps
 
 import pytz
 from consent.models import DataSharingConsent
+from course_wiki.models import ArticleRevision, RevisionPluginRevision
 from django.contrib.auth import authenticate, get_user_model, logout
 from django.core.cache import cache
 from django.db import transaction
@@ -27,15 +28,23 @@ from six import text_type
 from social_django.models import UserSocialAuth
 
 from entitlements.models import CourseEntitlement
+from lms.djangoapps.survey.models import SurveyAnswer
+from openedx.core.djangoapps.credit.models import CreditRequirementStatus
 from openedx.core.djangoapps.profile_images.images import remove_profile_images
 from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_names, set_has_profile_image
 from openedx.core.djangoapps.user_api.preferences.api import update_email_opt_in
+from openedx.core.djangolib.oauth2_retirement_utils import retire_dop_oauth2_models, retire_dot_oauth2_models
 from openedx.core.lib.api.authentication import (
     OAuth2AuthenticationAllowInactiveUser,
     SessionAuthenticationAllowInactiveUser
 )
 from openedx.core.lib.api.parsers import MergePatchParser
 from student.models import (
+    CourseEnrollment,
+    ManualEnrollmentAudit,
+    PasswordHistory,
+    PendingNameChange,
+    Registration,
     User,
     UserProfile,
     get_potentially_retired_user_by_username,
@@ -562,6 +571,95 @@ class AccountRetirementStatusView(ViewSet):
             return Response(text_type(exc), status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:  # pylint: disable=broad-except
             return Response(text_type(exc), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class LMSAccountRetirementView(ViewSet):
+    """
+    Provides an API endpoint for retiring a user in the LMS.
+    """
+    authentication_classes = (JwtAuthentication,)
+    permission_classes = (permissions.IsAuthenticated, CanRetireUser,)
+    parser_classes = (JSONParser,)
+
+    @request_requires_username
+    def post(self, request):
+        """
+        POST /api/user/v1/accounts/retire_LMS/
+
+        {
+            'username': 'user_to_retire'
+        }
+
+        Retires the user with the given username in the LMS.
+        """
+
+        username = request.data['username']
+        if is_username_retired(username):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            # Is this still necessary?
+            user = UserRetirementStatus.get_retirement_for_retirement_action(username).user
+
+            # EDUCATOR-2702
+            # Blocked
+            # https://github.com/edx/django-wiki/pull/35/files
+            # Not sure I'm calling functions in the wiki correctly
+            RevisionPluginRevision.retire_user(user)
+
+            # EDUCATOR-2701
+            # Blocked
+            # https://github.com/edx/django-wiki/pull/34/files
+            # Not sure I'm calling functions in the wiki correctly
+            ArticleRevision.retire_user(user)
+
+            # EDUCATOR-2695
+            # https://github.com/edx/edx-platform/pull/18100/files
+            PendingNameChange.delete_by_user_value(user, field='user')
+
+            # EDUCATOR-2690
+            # https://github.com/edx/edx-platform/commit/41b1f03c78d2c9ad7975f3b7eb28c2ca20884122
+            PasswordHistory.retire_user(user.id)
+
+            # EDUCATOR-2689
+            # https://github.com/edx/edx-platform/pull/18111/files
+            course_enrollments = CourseEnrollment.objects.filter(user=user)
+            for enrollment in course_enrollments:
+                ManualEnrollmentAudit.retire_manual_enrollments(enrollment)
+
+            # EDUCATOR-2659 // EDUCATOR-2813
+            # Backlog
+
+            # EDUCATOR-2658
+            # Backlog
+
+            # EDUCATOR-2648
+            # Backlog
+
+            # EDUCATOR-2681
+            # Backlog
+
+            # EDUCATOR-2703
+            # In progress
+            # https://github.com/edx/edx-platform/pull/18012/files
+            retire_dop_oauth2_models(user)
+            retire_dot_oauth2_models(user)
+
+            # EDUCATOR-2706
+            # https://github.com/edx/edx-platform/pull/18037/files
+            CreditRequirementStatus.retire_user(user.username)
+
+            # EDUCATOR-2698
+            # https://github.com/edx/edx-platform/pull/18091/files
+            SurveyAnswer.retire_user(user.id)
+
+        except UserRetirementStatus.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except RetirementStateError as exc:
+            return Response(text_type(exc), status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:  # pylint: disable=broad-except
+            return Response(text_type(exc), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AccountRetirementView(ViewSet):
