@@ -179,6 +179,7 @@ function(HTML5Video, HTML5HLSVideo, Resizer, HLS, _) {
                 state.videoPlayer.player = new HTML5HLSVideo.Player(
                     state.el,
                     _.extend({}, commonPlayerConfig, {
+                        state: state,
                         videoSources: state.HLSVideoSources,
                         canPlayHLS: state.canPlayHLS,
                         HLSOnlySources: state.HLSOnlySources

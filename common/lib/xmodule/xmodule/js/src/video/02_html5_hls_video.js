@@ -18,16 +18,26 @@
              * @param {Object} config  Contains common config for video player
              */
             function Player(el, config) {
-                var self = this;
+                var self = this,
+                    stopLoadOnce;
+
+                this.config = config;
 
                 // do common initialization independent of player type
                 this.init(el, config);
+
+                _.bindAll(this, 'playVideo');
 
                 // If we have only HLS sources and browser doesn't support HLS then show error message.
                 if (config.HLSOnlySources && !config.canPlayHLS) {
                     this.showErrorMessage(null, '.video-hls-error');
                     return;
                 }
+
+                this.config.state.el.on('initialize', _.once(function() {
+                    console.log('Player initialized');
+                    self.showPlayButton();
+                }));
 
                 // Safari has native support to play HLS videos
                 if (config.browserIsSafari) {
@@ -36,6 +46,10 @@
                     this.hls = new HLS();
                     this.hls.loadSource(config.videoSources[0]);
                     this.hls.attachMedia(this.video);
+
+                    stopLoadOnce = _.once(function() {
+                        self.hls.stopLoad();
+                    });
 
                     this.hls.on(HLS.Events.ERROR, this.onError.bind(this));
 
@@ -60,11 +74,19 @@
                             }
                         );
                     });
+                    this.hls.on(HLS.Events.LEVEL_LOADED, function(event, data) {
+                        stopLoadOnce();
+                    });
                 }
             }
 
             Player.prototype = Object.create(HTML5Video.Player.prototype);
             Player.prototype.constructor = Player;
+
+            Player.prototype.playVideo = function() {
+                this.hls.startLoad();
+                HTML5Video.Player.prototype.playVideo.apply(this, arguments);
+            };
 
             /**
              * Handler for HLS video errors. This only takes care of fatal erros, non-fatal errors
