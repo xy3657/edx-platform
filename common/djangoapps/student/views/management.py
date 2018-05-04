@@ -65,7 +65,7 @@ from openedx.core.djangoapps.programs.models import ProgramsApiConfig
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.theming import helpers as theming_helpers
 from openedx.core.djangoapps.user_api import accounts as accounts_settings
-from openedx.core.djangoapps.user_api.accounts.utils import generate_password
+from openedx.core.djangoapps.user_api.accounts.utils import email_exists, generate_password
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.config.waffle import PREVENT_AUTH_USER_WRITES, SYSTEM_MAINTENANCE_MSG, waffle
 from openedx.core.djangolib.markup import HTML, Text
@@ -1237,7 +1237,7 @@ def validate_new_email(user, new_email):
     if new_email == user.email:
         raise ValueError(_('Old email is the same as the new email.'))
 
-    if User.objects.filter(email=new_email).count() != 0:
+    if email_exists(new_email):
         raise ValueError(_('An account with this e-mail already exists.'))
 
 
