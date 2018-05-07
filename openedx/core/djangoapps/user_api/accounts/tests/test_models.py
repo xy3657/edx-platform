@@ -3,7 +3,12 @@ Model specific tests for user_api
 """
 import pytest
 
-from openedx.core.djangoapps.user_api.models import RetirementState, RetirementStateError, UserRetirementStatus
+from openedx.core.djangoapps.user_api.models import (
+    RetirementState,
+    RetirementStateError,
+    UserRetirementRequest,
+    UserRetirementStatus
+)
 from student.models import get_retired_email_by_email, get_retired_username_by_username
 from student.tests.factories import UserFactory
 
@@ -87,3 +92,21 @@ def test_retirement_create_already_retired(setup_retirement_states):  # pylint: 
 
     with pytest.raises(RetirementStateError):
         UserRetirementStatus.create_retirement(user)
+
+
+def test_retirement_request_create_success():
+    """
+    Ensure that retirement request record creation succeeds.
+    """
+    user = UserFactory()
+    retirement = UserRetirementRequest.create_retirement_request(user)
+    assert UserRetirementRequest.has_user_requested_retirement(user)
+
+
+def test_retirement_request_created_upon_status(setup_retirement_states):  # pylint: disable=unused-argument, redefined-outer-name
+    """
+    Ensure that retirement request record is created upon retirement status creation.
+    """
+    user = UserFactory()
+    retirement = UserRetirementStatus.create_retirement(user)
+    assert UserRetirementRequest.has_user_requested_retirement(user)
