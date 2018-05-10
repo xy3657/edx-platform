@@ -316,3 +316,14 @@ class UserRetirementStatus(TimeStampedModel):
 
     def __unicode__(self):
         return u'User: {} State: {} Last Updated: {}'.format(self.user.id, self.current_state, self.modified)
+
+
+@receiver(models.signals.post_delete, sender=UserRetirementStatus)
+def remove_pending_retirement_request(sender, instance, **kwargs):   # pylint: disable=unused-argument
+    """
+    Whenever a UserRetirementStatus record is deleted, remove the user's UserRetirementRequest record
+    IFF the UserRetirementStatus record was still PENDING.
+    """
+    pending_state = RetirementState.objects.filter(state_name='PENDING')[0]
+    if pending_state and instance.current_state == pending_state:
+        UserRetirementRequest.objects.filter(user=instance.user).delete()

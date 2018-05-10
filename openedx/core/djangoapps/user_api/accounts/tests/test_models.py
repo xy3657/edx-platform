@@ -110,3 +110,29 @@ def test_retirement_request_created_upon_status(setup_retirement_states):  # pyl
     user = UserFactory()
     UserRetirementStatus.create_retirement(user)
     assert UserRetirementRequest.has_user_requested_retirement(user)
+
+
+def test_retirement_request_deleted_upon_pending_status_delete(setup_retirement_states):  # pylint: disable=unused-argument, redefined-outer-name
+    """
+    Ensure that retirement request record is deleted upon deletion of a PENDING retirement status.
+    """
+    user = UserFactory()
+    retirement_status = UserRetirementStatus.create_retirement(user)
+    assert UserRetirementRequest.has_user_requested_retirement(user)
+    pending = RetirementState.objects.all().order_by('state_execution_order')[0]
+    assert retirement_status.current_state == pending
+    retirement_status.delete()
+    assert not UserRetirementRequest.has_user_requested_retirement(user)
+
+
+def test_retirement_request_preserved_upon_non_pending_status_delete(setup_retirement_states):  # pylint: disable=unused-argument, redefined-outer-name
+    """
+    Ensure that retirement request record is not deleted upon deletion of a non-PENDING retirement status.
+    """
+    user = UserFactory()
+    retirement_status = UserRetirementStatus.create_retirement(user)
+    assert UserRetirementRequest.has_user_requested_retirement(user)
+    non_pending = RetirementState.objects.all().order_by('state_execution_order')[1]
+    retirement_status.current_state = non_pending
+    retirement_status.delete()
+    assert UserRetirementRequest.has_user_requested_retirement(user)
