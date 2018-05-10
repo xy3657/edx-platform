@@ -377,7 +377,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': 'course-v1:FAKE+FA1-MA1.X+3T2017',
                 'enrollment_end': str(self.TOMORROW),
                 'pacing_type': 'instructor_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         mock_pseudo_session.return_value = {
@@ -403,7 +404,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': 'course-v1:edX+toy+2012_Fall',
                 'enrollment_end': str(self.TOMORROW),
                 'pacing_type': 'instructor_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         response = self.client.get(self.path)
@@ -432,11 +434,13 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': 'course-v1:FAKE+FA1-MA1.X+3T2017',
                 'enrollment_end': str(self.TOMORROW),
                 'pacing_type': 'instructor_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         response = self.client.get(self.path)
         self.assertEqual(response.content.count('<li class="course-item">'), 0)
+
 
     @patch('entitlements.api.v1.views.get_course_runs_for_course')
     @patch.object(CourseOverview, 'get_from_id')
@@ -464,7 +468,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': str(mocked_course_overview.id),
                 'enrollment_end': str(mocked_course_overview.enrollment_end),
                 'pacing_type': 'self_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         CourseEntitlementFactory(user=self.user, enrollment_course_run=course_enrollment)
@@ -482,7 +487,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': str(mocked_course_overview.id),
                 'enrollment_end': str(mocked_course_overview.enrollment_end),
                 'pacing_type': 'self_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         # response = self.client.get(self.path)
@@ -499,7 +505,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': str(mocked_course_overview.id),
                 'enrollment_end': None,
                 'pacing_type': 'self_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         # response = self.client.get(self.path)
@@ -529,7 +536,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': str(mocked_course_overview.id),
                 'enrollment_end': str(mocked_course_overview.enrollment_end),
                 'pacing_type': 'self_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         entitlement = CourseEntitlementFactory(user=self.user, enrollment_course_run=course_enrollment)
@@ -565,7 +573,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 'key': str(mocked_course_overview.id),
                 'enrollment_end': str(mocked_course_overview.enrollment_end),
                 'pacing_type': 'self_paced',
-                'type': 'verified'
+                'type': 'verified',
+                'status': 'published'
             }
         ]
         entitlement = CourseEntitlementFactory(user=self.user, enrollment_course_run=course_enrollment, created=self.THREE_YEARS_AGO)
