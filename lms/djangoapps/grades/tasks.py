@@ -137,6 +137,7 @@ def recalculate_course_and_subsection_grades_for_user(self, **kwargs):  # pylint
     user = User.objects.get(id=user_id)
     course_key = CourseKey.from_string(course_key_str)
     previous_course_grade = CourseGradeFactory().read(user, course_key=course_key)
+    log.info("previous_course_grade : %s and attempted : %s", unicode(previous_course_grade), previous_course_grade.attempted)
     if previous_course_grade and previous_course_grade.attempted:
         CourseGradeFactory().update(
             user=user,
